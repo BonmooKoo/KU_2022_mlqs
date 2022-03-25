@@ -9,6 +9,11 @@
 #include <pthread.h>
 
 #define CLOCKID CLOCK_PROCESS_CPUTIME_ID
+#define ITIMER ITIMER_REAL
+//timer알람이 나오면
+void alarm_handler (int signo){
+    
+}
 int main(int args,char* argv[]){
     //초기 변수 설정
     if(args!=3){
@@ -29,36 +34,27 @@ int main(int args,char* argv[]){
     //맨 처음만 알파벳 순으로 정렬= 줄 
 
 //timer 설정
-    
-    //CLOCKID = cpu time
-    
-    
-    //필요한 변수들 
-    int timer1;
-    int timer_set1;
-    struct sigevent evp;
-    timer_t timerid;
-    struct itimerspec delay;
-    
-    evp.sigev_value.sival_ptr=&timer;
-    evp.sigev_notift=SIGEV_SIGNAL;
-    evp.sigev_signo=SIGKILL;
-    //evp : timer 만료시 (프로그램 종료 SIGKILL or SIGTERM)
-    //send signal evp.sigev_signo to process
-
     //timer create
-    timer1=timer_create(CLOCKID,&evp,&timerid);
-    if(timer1){
-        perror("timer not created");
-        return;
-    }
+    struct itimerval delay;
+    int ret;
 
-    //timer setting
+    signal(SIGALARM,alarm_handler);
+
+     //timer setting
     delay.it_value.tv_sec=1;
     delay.it_value.tv_nsec=0;
     delay.it_interval.tv_sec=1;
     delay.it_interval.tv_sec=0;
     
+    ret=setitimer(ITIMER,&delay,NULL);
+    if(ret){
+        perror("setitimer");
+        return;
+    }
+
+
+
+
     
 
 
@@ -73,11 +69,7 @@ int main(int args,char* argv[]){
 
     //fork가 모두 생성되도록 기다려줌 이후 타이머 시작
     sleep(3);
-    timer_set1=timer_settime(timerid,0,&delay,NULL);    
-    if(timer_set1){
-        perror("timer_set1");
-        return;
-    }
+    
     //fork 들 알파벳 순서로 linked list에 넣어줌
 
     
