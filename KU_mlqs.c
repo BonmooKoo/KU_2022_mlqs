@@ -23,6 +23,11 @@ int main(int args,char* argv[]){
 	const int ts = atoi(argv[2]);
     
     //timer 설정
+    int timer=timer_create(clock_t clockid,struct sigevent *restrict sevp, timer_t *restrict timerid);
+    if(timer!=0){
+        perror("timer not created");
+        exit(1);
+    }
     
 //asdf
 //i make perfect time table!
