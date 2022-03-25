@@ -13,7 +13,7 @@ int main(int args,char* argv[]){
     if(args!=3){
         perror("lack of value");        
         exit(1);
-    }
+    }   
     pnum=atoi(argv[1]);
     if(pnum>26 || pnum<1){
         perror("wrong num of processes");
@@ -24,5 +24,7 @@ int main(int args,char* argv[]){
     
     //timer 설정
     
+//asdf
+//i make perfect time table!
 
 }
