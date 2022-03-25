@@ -43,7 +43,7 @@ int main(int args,char* argv[]){
     evp.sigev_value.sival_ptr=&timer;
     evp.sigev_notift=SIGEV_SIGNAL;
     evp.sigev_signo=SIGKILL;
-    //evp : timer 만료시 (프로그램 종료 SIGKILL)
+    //evp : timer 만료시 (프로그램 종료 SIGKILL or SIGTERM)
     //send signal evp.sigev_signo to process
 
     //timer create
@@ -59,11 +59,7 @@ int main(int args,char* argv[]){
     delay.it_interval.tv_sec=1;
     delay.it_interval.tv_sec=0;
     
-    timer_set1=timer_settime(timerid,0,&delay,NULL);    
-    if(timer_set1){
-        perror("timer_set1");
-        return;
-    }
+    
 
 
     //fork() 생성
@@ -75,9 +71,13 @@ int main(int args,char* argv[]){
         }
     }
 
-    //fork가 모두 생성되도록 기다려줌
+    //fork가 모두 생성되도록 기다려줌 이후 타이머 시작
     sleep(3);
-
+    timer_set1=timer_settime(timerid,0,&delay,NULL);    
+    if(timer_set1){
+        perror("timer_set1");
+        return;
+    }
     //fork 들 알파벳 순서로 linked list에 넣어줌
 
     
