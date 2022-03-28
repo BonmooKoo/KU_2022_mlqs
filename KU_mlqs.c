@@ -17,6 +17,43 @@ void sec_handler(int signo){
 void ten_handler(int signo){
     //priority 초기화
 }
+//linked list 로 queue 구현
+
+struct NODE{
+    struct NODE *next;
+    int fork_id;
+}
+struct QUEUE{
+    NODE *front;
+    NODE *end;
+    int count;
+}
+void initqueue(struct QUEUE *target){
+    target->front=target->end=NULL;
+    target->count=0;
+}
+void enqueue(int fork_id,struct QUEUE *target){
+    struct NODE *new=malloc(sizeof(struct NODE));
+    new->next=NULL;
+    new->data=fork_id;
+    if(target->count=0){
+        target->front=new;
+    }
+    else{
+        target->end->next=new;
+    }
+    target->end=new;
+    target->count++;
+}
+int dequeue(struct QUEUE *target){
+    NODE *now;
+    if(target->count=0){
+        return 0;
+    }
+    now=target->front;
+    
+
+}
 int main(int args,char* argv[]){
 //초기 입력 변수 처리
     if(args!=3){
@@ -34,8 +71,6 @@ int main(int args,char* argv[]){
 //linked list 구현
     //3개 linked list 선입 선출 
     
-    //맨 처음만 알파벳 순으로 정렬= 줄 
-
 //signal hander 정의
     struct sigaction sa1;
     struct sigaction sa2;
@@ -94,6 +129,9 @@ int main(int args,char* argv[]){
             perror("wrong fork");
             return
         }
+        //insertNode(fork_id);
+        //fork 들 알파벳 순서로 linked list에 넣어줌(push)
+
     }
 
     //fork가 모두 생성되도록 기다려줌 이후 타이머 시작
