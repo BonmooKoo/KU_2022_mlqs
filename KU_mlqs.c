@@ -6,28 +6,32 @@
 #include <string.h>
 #include <errno.h>
 #include <mqueue.h>
-#include <pthread.h>
 
 #define CLOCKID CLOCK_PROCESS_CPUTIME_ID
 #define EVERYSEC SIGUSR1
-#define EVERYTEN SIGUSR2
+#define ENDPROCESS SIGUSR2
+//signal hander 정의
 void sec_handler(int signo){
     //다른 애로 넘겨줌
+
 }
 void ten_handler(int signo){
     //priority 초기화
 }
+//signal handler 종료
+
 //linked list 로 queue 구현
 
-struct NODE{
+typedef struct NODE{
     struct NODE *next;
     int fork_id;
-}
-struct QUEUE{
+}NODE;
+typedef struct QUEUE{
     NODE *front;
     NODE *end;
     int count;
-}
+}QUEUE;
+
 void initqueue(struct QUEUE *target){
     target->front=target->end=NULL;
     target->count=0;
@@ -46,21 +50,27 @@ void enqueue(int fork_id,struct QUEUE *target){
     target->count++;
 }
 int dequeue(struct QUEUE *target){
+    int fork_id;
     NODE *now;
     if(target->count=0){
         return 0;
     }
     now=target->front;
-    
-
+    fork_id=now->fork_id;
+    target->front=now->next;
+    free(now);
+    target->count--;
+    return fork_id;
 }
+//linked list 종료
+
 int main(int args,char* argv[]){
 //초기 입력 변수 처리
     if(args!=3){
         perror("lack of value");        
         return;
     }   
-    pnum=atoi(argv[1]);
+    int pnum=atoi(argv[1]);
     if(pnum>26 || pnum<1){
         perror("wrong num of processes");
         return;
@@ -70,7 +80,13 @@ int main(int args,char* argv[]){
     
 //linked list 구현
     //3개 linked list 선입 선출 
-    
+    QUEUE firstlv;
+    QUEUE secondlv;
+    QUEUE thirdlv;
+    initqueue(firstlv);
+    initqueue(secondlv);
+    initqueue(thirdlv);
+        
 //signal hander 정의
     struct sigaction sa1;
     struct sigaction sa2;
@@ -81,27 +97,42 @@ int main(int args,char* argv[]){
     if(sig1){
         perror("sig1");
     }
-    int sig2=sigaction(EVERYTEN,&sa2,NULL);
+    int sig2=sigaction(ENDPROCESS,&sa2,NULL);
     if(sig2){
         perror("sig2");
     }
+//signal hander 끝
+
+    //fork() 생성
+    for (int i=0;i<num_process;i++){
+        int fork_id=fork();
+        if(fork_id==0){
+            perror("wrong fork");
+            return;
+        }
+        enqueue(fork_id,firstlv);
+        
+    }
+    //fork 끝
+    //fork가 모두 생성되도록 기다려줌 이후 타이머 시작
+    sleep(3);
 
 //timer 설정
-    
-    //CLOCKID = cpu time
-    
-    
+    //CLOCKID = cpu time    
     //필요한 변수들 
-    int timer1;
+    int timer1; // timer1은 매초 변환
     int timer_set1;
-    struct sigevent evp;
+    int timer2; // timer2은 X초 이후 process 종료
+    int timer_set2;
+    
     timer_t timerid;
     struct itimerspec delay1;
     
-    evp.sigev_value.sival_ptr=&timer;
-    evp.sigev_notift=SIGEV_SIGNAL;
+    struct sigevent evp;
+    evp.sigev_value.sival_ptr=&timer1;
+    evp.sigev_notify=SIGEV_SIGNAL;
     evp.sigev_signo=EVERYSEC;
-    //evp : timer 만료시
+    //evp : timer 만료시 (1초마다)
     //send signal evp.sigev_signo to process
 
     //timer create
@@ -118,31 +149,13 @@ int main(int args,char* argv[]){
     delay1.it_interval.tv_sec=1;
     delay1.it_interval.tv_sec=0;
     
-    
 
-
-
-    //fork() 생성
-    for (int i=0;i<num_process;i++){
-        int fork_id=fork();
-        if(fork_id==0){
-            perror("wrong fork");
-            return
-        }
-        //insertNode(fork_id);
-        //fork 들 알파벳 순서로 linked list에 넣어줌(push)
-
-    }
-
-    //fork가 모두 생성되도록 기다려줌 이후 타이머 시작
-    sleep(3);
     timer_set1=timer_settime(timerid,0,&delay1,NULL);    
     if(timer_set1){
         perror("timer_set1");
         return;
     }
-    //fork 들 알파벳 순서로 linked list에 넣어줌
-
+    
     
 
 
