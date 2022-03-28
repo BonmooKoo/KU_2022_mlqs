@@ -7,16 +7,37 @@
 #include <errno.h>
 #include <mqueue.h>
 
-#define CLOCKID CLOCK_PROCESS_CPUTIME_ID
+#define CLOCKID CLOCK_MONOTONIC
 #define EVERYSEC SIGUSR1
 #define ENDPROCESS SIGUSR2
-//signal hander 정의
-void sec_handler(int signo){
-    //다른 애로 넘겨줌
 
+int timercount=0;
+//signal hander 정의
+void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
+    //다른 애로 넘겨줌
+    int fork_id;
+    if(timercount==10){
+        while(second->count!=0){
+            enqueue(dequeue(&second),&first);
+        }
+        while(third->count!=0){
+            enqueue(dequeue(&third),&first);
+        }
+        //정렬!
+
+        timercount=0;
+    }
+    if(!isEmpty(&first)){
+        //기본 실행 fork 종료
+        //새 fork 실행
+        
+    }
+
+    
 }
-void ten_handler(int signo){
+void end_handler(int signo){
     //priority 초기화
+
 }
 //signal handler 종료
 
@@ -25,13 +46,19 @@ void ten_handler(int signo){
 typedef struct NODE{
     struct NODE *next;
     int fork_id;
+    int runtime;
 }NODE;
 typedef struct QUEUE{
     NODE *front;
     NODE *end;
-    int count;
+    int count;//
+    
 }QUEUE;
-
+bool isEmpty(struct QUEUE *target){
+    if (target->count=0){
+        return true;
+    }
+}
 void initqueue(struct QUEUE *target){
     target->front=target->end=NULL;
     target->count=0;
@@ -40,6 +67,7 @@ void enqueue(int fork_id,struct QUEUE *target){
     struct NODE *new=malloc(sizeof(struct NODE));
     new->next=NULL;
     new->data=fork_id;
+    new->runtime=0;
     if(target->count=0){
         target->front=new;
     }
@@ -49,20 +77,46 @@ void enqueue(int fork_id,struct QUEUE *target){
     target->end=new;
     target->count++;
 }
-int dequeue(struct QUEUE *target){
-    int fork_id;
+void enqueue(int fork_id,int runtime,struct QUEUE *target){
+    struct NODE *new=malloc(sizeof(struct NODE));
+    new->next=NULL;
+    new->data=fork_id;
+    new->runtime=runtime;
+    if(target->count=0){
+        target->front=new;
+    }
+    else{
+        target->end->next=new;
+    }
+    target->end=new;
+    target->count++;
+}
+void enqueue(struct NODE *new,struct QUEUE *target){
+    if(target->count=0){
+        target->front=new;
+    }
+    else{
+        target->end->next=new;
+    }
+    target->end=new;
+    target->count++;
+}
+
+NODE* dequeue(struct QUEUE *target){
     NODE *now;
     if(target->count=0){
-        return 0;
+        return NULL;
     }
     now=target->front;
-    fork_id=now->fork_id;
     target->front=now->next;
-    free(now);
     target->count--;
-    return fork_id;
+    return now;
 }
 //linked list 종료
+
+//sort queue
+
+//
 
 int main(int args,char* argv[]){
 //초기 입력 변수 처리
@@ -83,15 +137,16 @@ int main(int args,char* argv[]){
     QUEUE firstlv;
     QUEUE secondlv;
     QUEUE thirdlv;
-    initqueue(firstlv);
-    initqueue(secondlv);
-    initqueue(thirdlv);
+    //초기화
+    initqueue(&firstlv);
+    initqueue(&secondlv);
+    initqueue(&thirdlv);
         
 //signal hander 정의
     struct sigaction sa1;
     struct sigaction sa2;
-    sa1.sa_hander=sec_handler;
-    sa2.sa_hander=ten_handler;
+    sa1.sa_hander=sec_handler(&firstlv,&secondlv,&thirdlv);
+    sa2.sa_hander=end_handler;
     
     int sig1=sigaction(EVERYSEC,&sa1,NULL);
     if(sig1){
@@ -106,19 +161,21 @@ int main(int args,char* argv[]){
     //fork() 생성
     for (int i=0;i<num_process;i++){
         int fork_id=fork();
-        if(fork_id==0){
+        if(fork_id==-1){
             perror("wrong fork");
             return;
         }
-        enqueue(fork_id,firstlv);
-        
+        else if(fork_id==0){
+        //fork 실행   exec()
+        }
+        else enqueue(fork_id,&firstlv);
     }
     //fork 끝
     //fork가 모두 생성되도록 기다려줌 이후 타이머 시작
     sleep(3);
 
 //timer 설정
-    //CLOCKID = cpu time    
+    //CLOCKID = real time    
     //필요한 변수들 
     int timer1; // timer1은 매초 변환
     int timer_set1;
@@ -156,7 +213,10 @@ int main(int args,char* argv[]){
         return;
     }
     
-    
+    //dequeue lv1 ('A')
+    int A=dequeue(&firstlv);
+    kill(A,SIGCONT);
 
-
+    //이후 sig handler 에 맡김
+    //종료
 }
