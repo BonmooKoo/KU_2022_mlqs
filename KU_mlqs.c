@@ -167,6 +167,7 @@ int main(int args,char* argv[]){
         }
         else if(fork_id==0){
         //fork 실행   exec()
+            //execl('ku_app',)
         }
         else enqueue(fork_id,&firstlv);
     }
