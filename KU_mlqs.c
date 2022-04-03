@@ -17,6 +17,7 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
     //다른 애로 넘겨줌
     int fork_id;
     if(timercount==10){
+        //초기화
         while(second->count!=0){
             enqueue(dequeue(&second),&first);
         }
@@ -27,10 +28,29 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
 
         timercount=0;
     }
+    
     if(!isEmpty(&first)){
         //기본 실행 fork 종료
         //새 fork 실행
-        
+        NODE temp=dequeue(&first);
+        kill(temp.fork_id,SIGSTOP);
+        if(first->count!=0){
+            kill(first->front->fork_id,SIGCONT);
+        }
+    }
+    else if(!isEmpty(&second)){
+        NODE temp=dequeue(&second);
+        kill(temp.fork_id,SIGSTOP);
+        if(second->front->fork_id!=NULL){
+            kill(second->front->fork_id,SIGCONT);
+        }
+    }
+    else{
+        NODE temp=dequeue(&third);
+        kill(temp.fork_id,SIGSTOP);
+        if(third->front->fork_id!=NULL){
+            kill(third->front->fork_id,SIGCONT);
+        }
     }
 
     
@@ -58,6 +78,11 @@ bool isEmpty(struct QUEUE *target){
     if (target->count=0){
         return true;
     }
+}
+int peek(struct QUEUE *target){
+    if(target->count!=0){
+        return target->front->fork_id;
+    }else return 0;
 }
 void initqueue(struct QUEUE *target){
     target->front=target->end=NULL;
@@ -215,8 +240,8 @@ int main(int args,char* argv[]){
     }
     
     //dequeue lv1 ('A')
-    int A=dequeue(&firstlv);
-    kill(A,SIGCONT);
+    NODE temp=dequeue(&firstlv);
+    kill(temp.fork_id,SIGCONT);
 
     //이후 sig handler 에 맡김
     //종료
