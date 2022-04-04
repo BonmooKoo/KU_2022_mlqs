@@ -115,14 +115,12 @@ QUEUE secondlv;
 QUEUE thirdlv;
 //
 
-
 // signal hander 정의
 
 int timercount = 0;
 int pnum = 0;
-int totaltimeslice=0
-void sec_handler(int signo)
-{
+int totaltimeslice = 0;
+void sec_handler(int signo){
     // handler 불릴때마다 count 증가
     timercount++;
     if (timercount == totaltimeslice)
@@ -137,12 +135,12 @@ void sec_handler(int signo)
     {
         NODE *temp;
         //초기화(전부 first로 넣어줌)
-        while (secondlv->count != 0)
+        while (secondlv.count != 0)
         {
             temp = dequeue(&secondlv);
             enqueue(&temp, &firstlv);
         }
-        while (thirdlv->count != 0)
+        while (thirdlv.count != 0)
         {
             temp = dequeue(&secondlv);
             enqueue(&temp, &firstlv);
@@ -165,7 +163,6 @@ void sec_handler(int signo)
         {
             enqueue(&old, &firstlv);
         }
-        
     }
     else if (!isEmpty(&secondlv))
     {
@@ -189,7 +186,6 @@ void sec_handler(int signo)
         {
             enqueue(&old, &thirdlv);
             old->runtime = 0;
-
         }
         else
         {
@@ -197,17 +193,17 @@ void sec_handler(int signo)
         }
     }
     kill(old->fork_id, SIGSTOP);
-    if (firstlv->count != 0)
+    if (firstlv.count != 0)
     {
-        kill(firstlv->front->fork_id, SIGCONT);
+        kill(firstlv.front->fork_id, SIGCONT);
     }
-    else if (secondlv->count != 0)
+    else if (secondlv.count != 0)
     {
-        kill(secondlv->front->fork_id, SIGCONT);
+        kill(secondlv.front->fork_id, SIGCONT);
     }
-    else if (thirdlv->count != 0)
+    else if (thirdlv.count != 0)
     {
-        kill(thirdlv->front->fork_id, SIGCONT);
+        kill(thirdlv.front->fork_id, SIGCONT);
     }
 }
 void end_handler(int signo)
@@ -215,7 +211,6 @@ void end_handler(int signo)
     // priority 초기화
 }
 // signal handler 종료
-
 
 int main(int args, char *argv[])
 {
@@ -260,7 +255,10 @@ int main(int args, char *argv[])
     // signal hander 끝
 
     // fork() 생성
-    char input = 'A';
+    char alpha='A';
+    char input[2];
+    input[0]=alpha;
+    input[1]='\0';
     for (int i = 0; i < pnum; i++)
     {
         int fork_id = fork();
@@ -272,8 +270,8 @@ int main(int args, char *argv[])
         else if (fork_id == 0)
         {
             // fork 프로그램 실행
-            execl('./ku_app', 'ku_app', input, NULL);
-            input += 1;
+            execl('./ku_app', 'ku_app',&input, NULL);
+            alpha += 1;
         }
         // parent
         else
@@ -288,12 +286,8 @@ int main(int args, char *argv[])
     //필요한 변수들
     int timer1; // timer1은 매초 변환
     int timer_set1;
-    int timer2; // timer2은 X초 이후 process 종료
-    int timer_set2;
-
     timer_t timerid;
     struct itimerspec delay1;
-
     struct sigevent evp;
     evp.sigev_value.sival_ptr = &timer1;
     evp.sigev_notify = SIGEV_SIGNAL;
@@ -324,7 +318,7 @@ int main(int args, char *argv[])
     }
 
     // dequeue lv1 ('A')
-    NODE *temp = dequeue(&firstlv);
+    NODE *temp = firstlv.front;
     kill(temp->fork_id, SIGCONT);
 
     //이후 sig handler 에 맡김
