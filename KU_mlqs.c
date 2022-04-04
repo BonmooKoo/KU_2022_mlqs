@@ -184,15 +184,17 @@ int main(int args,char* argv[]){
 //signal hander 끝
 
     //fork() 생성
+    char input='A';
     for (int i=0;i<num_process;i++){
         int fork_id=fork();
-        if(fork_id==-1){
+        if(fork_id==-1){    
             perror("wrong fork");
             return;
         }
         else if(fork_id==0){
-        //fork 실행   exec()
-            //execl('ku_app',)
+            //fork 프로그램 실행 
+            input+=1;
+            execl('/ku_app','ku_app',input,NULL);
         }
         else enqueue(fork_id,&firstlv);
     }
