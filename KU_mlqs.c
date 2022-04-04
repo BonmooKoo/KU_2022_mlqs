@@ -111,13 +111,16 @@ NODE *dequeue(struct QUEUE *target)
     // free(now);
     return now;
 }
+/*
 void sortQueue(struct QUEUE *target)
 {
     int counter=target->count;
     int max=100;
-    for(int i=0;i<)
+    for(int i=0;i<counter;i++){
+        
+    }
 }
-
+*/
 // linked list 종료
 // queue 선언
 QUEUE firstlv;
@@ -315,6 +318,9 @@ int main(int args, char *argv[])
     NODE *temp = firstlv.front;
     kill(temp->fork_id, SIGCONT);
 
+    while(1){
+
+    }
     //이후 sig handler 에 맡김
     //종료
 }
