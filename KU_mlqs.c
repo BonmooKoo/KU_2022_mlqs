@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
+
 // linked list 로 queue 구현
 typedef struct NODE
 {
@@ -13,49 +14,49 @@ typedef struct NODE
     int fork_id;
     int runtime;
     int alpha;
+
 } NODE;
 
 typedef struct QUEUE
 {
-    NODE *front;
-    NODE *end;
+    struct NODE *front;
+    struct NODE *end;
     int count;
 
 } QUEUE;
-
-int isEmpty(struct QUEUE *target)
+QUEUE* firstlv;
+QUEUE* secondlv;
+QUEUE* thirdlv;
+int isEmpty(QUEUE *target)
 {
-    if (target->count = 0)
+    if (target->count == 0)
     {
         return 1;
     }
     else
         return 0;
 }
-/*
-int peek(struct QUEUE *target)
+
+void initqueue()
 {
-    if (target->count != 0)
-    {
-        return target->front->fork_id;
-    }
-    else
-        return 0;
+    firstlv=(QUEUE*)malloc(sizeof(QUEUE));
+    firstlv->front = firstlv->end = NULL;
+    firstlv->count = 0;
+    secondlv=(QUEUE*)malloc(sizeof(QUEUE));
+    secondlv->front = secondlv->end = NULL;
+    secondlv->count = 0;
+    thirdlv=(QUEUE*)malloc(sizeof(QUEUE));
+    thirdlv->front = thirdlv->end = NULL;
+    thirdlv->count = 0;
 }
-*/
-void initqueue(struct QUEUE *target)
+void enqueuenew(int fork_id, int alpha,QUEUE* target)
 {
-    target->front = target->end = NULL;
-    target->count = 0;
-}
-void enqueuenew(int fork_id, int alpha, struct QUEUE *target)
-{
-    struct NODE *new = malloc(sizeof(struct NODE));
+    NODE* new=(NODE*)malloc(sizeof(NODE));
     new->next = NULL;
     new->fork_id = fork_id;
     new->alpha = alpha;
     new->runtime = 0;
-    if (target->count = 0)
+    if (target->count == 0)
     {
         target->front = new;
     }
@@ -65,26 +66,25 @@ void enqueuenew(int fork_id, int alpha, struct QUEUE *target)
     }
     target->end = new;
     target->count++;
-}
 /*
-void enqueue(int fork_id,int runtime,struct QUEUE *target){
-    struct NODE *new=malloc(sizeof(struct NODE));
-    new->next=NULL;
-    new->fork_id=fork_id;
-    new->runtime=runtime;
+    NODE new;
+    new.next=NULL;
+    new.fork_id=fork_id;
+    new.alpha=alpha;
+    new.runtime=0;
     if(target->count=0){
-        target->front=new;
+        target->front=&new;
+    }else{
+        target->end->next=&new;
     }
-    else{
-        target->end->next=new;
-    }
-    target->end=new;
+    target->end=&new;
     target->count++;
-}
 */
-void enqueue(struct NODE *new, struct QUEUE *target)
+}
+
+void enqueue(NODE *new, QUEUE *target)
 {
-    if (target->count = 0)
+    if (target->count == 0)
     {
         target->front = new;
     }
@@ -96,19 +96,22 @@ void enqueue(struct NODE *new, struct QUEUE *target)
     target->count++;
 }
 
-NODE *dequeue(struct QUEUE *target)
+NODE* dequeue(QUEUE *target)
 {
-    struct NODE *now = malloc(sizeof(struct NODE));
-    if (target->count = 0)
+    NODE *now;  
+    if (target->count == 0)
     {
         return NULL;
     }
     now = target->front;
     target->front = now->next;
     target->count--;
-    // free(now);
+    
     return now;
 }
+
+// linked list 종료
+// queue 선언
 /*
 void sortQueue(struct QUEUE *target)
 {
@@ -137,7 +140,10 @@ void sec_handler(int signo)
 {
     // handler 불릴때마다 count 증가
     timercount++;
-    if (timercount == totaltimeslice)
+    printf("handler\n");
+    printf("timercount: %d\n",timercount);
+
+    if (timercount!=0&&timercount == totaltimeslice)
     {
         pid_t pid = getpid();
         kill(pid, SIGTERM);
@@ -241,15 +247,7 @@ int main(int args, char *argv[])
     // 3개 linked list 선입 선출
 
     //초기화
-    QUEUE first;
-    firstlv=&first;
-    QUEUE second;
-    secondlv=&second;
-    QUEUE third;
-    thirdlv=&third;;
-    initqueue(firstlv);
-    initqueue(secondlv);
-    initqueue(thirdlv);
+    initqueue();
 
     // fork() 생성
     char input[2]={'A','\0'};
@@ -270,8 +268,9 @@ int main(int args, char *argv[])
 
         //enqueue 가 문제있음
         // parent
-        else
-            //enqueuenew(fork_id, i, &firstlv);
+        else{
+            enqueuenew(fork_id, i, firstlv);
+        }
     }
     // fork 끝
     // fork가 모두 생성되도록 기다려줌 이후 타이머 시작
@@ -296,7 +295,10 @@ int main(int args, char *argv[])
         perror("setitimer");
         return;
     }
-
+    printf("pnum: %d\n",pnum);
+    printf("timercount:%d\n",timercount);
+    printf("timeslice:%d\n",totaltimeslice);
+    
     // dequeue lv1 ('A')
     NODE *temp = firstlv->front;
     kill(temp->fork_id, SIGCONT);
@@ -306,5 +308,7 @@ int main(int args, char *argv[])
     signal(SIGALRM, sec_handler);
 
     //종료
-    
+    while(1){
+        pause();
+    }
 }

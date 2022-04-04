@@ -24,7 +24,6 @@ typedef struct QUEUE
     int count;
 
 } QUEUE;
-
 QUEUE* firstlv;
 QUEUE* secondlv;
 QUEUE* thirdlv;
@@ -57,7 +56,7 @@ void enqueuenew(int fork_id, int alpha,QUEUE* target)
     new->fork_id = fork_id;
     new->alpha = alpha;
     new->runtime = 0;
-    if (target->count = 0)
+    if (target->count == 0)
     {
         target->front = new;
     }
@@ -85,7 +84,7 @@ void enqueuenew(int fork_id, int alpha,QUEUE* target)
 
 void enqueue(NODE *new, QUEUE *target)
 {
-    if (target->count = 0)
+    if (target->count == 0)
     {
         target->front = new;
     }
@@ -100,7 +99,7 @@ void enqueue(NODE *new, QUEUE *target)
 NODE* dequeue(QUEUE *target)
 {
     NODE *now;  
-    if (target->count = 0)
+    if (target->count == 0)
     {
         return NULL;
     }
@@ -117,9 +116,8 @@ NODE* dequeue(QUEUE *target)
 
 int main()
 {
-    initqueue();
     printf("doing~~~~~~\n");
-    
+    initqueue();
     enqueuenew(1, 1,firstlv);
     // NODE* temp=dequeue(firstlv);
     // int j=temp->fork_id;
