@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -17,12 +17,14 @@ typedef struct NODE
     struct NODE *next;
     int fork_id;
     int runtime;
+    int alpha;
 } NODE;
 typedef struct QUEUE
 {
     NODE *front;
     NODE *end;
     int count;
+
 } QUEUE;
 
 int isEmpty(struct QUEUE *target)
@@ -48,11 +50,12 @@ void initqueue(struct QUEUE *target)
     target->front = target->end = NULL;
     target->count = 0;
 }
-void enqueuenew(int fork_id, struct QUEUE *target)
+void enqueuenew(int fork_id, int alpha, struct QUEUE *target)
 {
     struct NODE *new = malloc(sizeof(struct NODE));
     new->next = NULL;
     new->fork_id = fork_id;
+    new->alpha = alpha;
     new->runtime = 0;
     if (target->count = 0)
     {
@@ -108,6 +111,13 @@ NODE *dequeue(struct QUEUE *target)
     // free(now);
     return now;
 }
+void sortQueue(struct QUEUE *target)
+{
+    int counter=target->count;
+    int max=100;
+    for(int i=0;i<)
+}
+
 // linked list 종료
 // queue 선언
 QUEUE firstlv;
@@ -120,7 +130,8 @@ QUEUE thirdlv;
 int timercount = 0;
 int pnum = 0;
 int totaltimeslice = 0;
-void sec_handler(int signo){
+void sec_handler(int signo)
+{
     // handler 불릴때마다 count 증가
     timercount++;
     if (timercount == totaltimeslice)
@@ -255,10 +266,8 @@ int main(int args, char *argv[])
     // signal hander 끝
 
     // fork() 생성
-    char alpha='A';
     char input[2];
-    input[0]=alpha;
-    input[1]='\0';
+    input[1] = '\0';
     for (int i = 0; i < pnum; i++)
     {
         int fork_id = fork();
@@ -270,12 +279,12 @@ int main(int args, char *argv[])
         else if (fork_id == 0)
         {
             // fork 프로그램 실행
-            execl('./ku_app', 'ku_app',&input, NULL);
-            alpha += 1;
+            input[1] = 'A' + i;
+            execl('./ku_app', 'ku_app', &input, NULL);
         }
         // parent
         else
-            enqueuenew(fork_id, &firstlv);
+            enqueuenew(fork_id, i, &firstlv);
     }
     // fork 끝
     // fork가 모두 생성되도록 기다려줌 이후 타이머 시작
@@ -284,36 +293,21 @@ int main(int args, char *argv[])
     // timer 설정
     // CLOCKID = real time
     //필요한 변수들
-    int timer1; // timer1은 매초 변환
-    int timer_set1;
-    timer_t timerid;
-    struct itimerspec delay1;
-    struct sigevent evp;
-    evp.sigev_value.sival_ptr = &timer1;
-    evp.sigev_notify = SIGEV_SIGNAL;
-    evp.sigev_signo = EVERYSEC;
-    // evp : timer 만료시 (1초마다)
-    // send signal evp.sigev_signo to process
+    struct itimerval delay;
+    int ret;
 
-    // timer create
-    // 1초마다 EVERYSEC 신호를 전달하는 친구
-    timer1 = timer_create(CLOCKID, &evp, &timerid);
-    if (timer1)
-    {
-        perror("timer not created");
-        return;
-    }
+    signal(SIGALRM, sec_handler);
 
     // timer setting
-    delay1.it_value.tv_sec = 1;
-    delay1.it_value.tv_nsec = 0;
-    delay1.it_interval.tv_sec = 1;
-    delay1.it_interval.tv_sec = 0;
+    delay.it_value.tv_sec = 1;
+    delay.it_value.tv_usec = 0;
+    delay.it_interval.tv_sec = 1;
+    delay.it_interval.tv_usec = 0;
 
-    timer_set1 = timer_settime(timerid, 0, &delay1, NULL);
-    if (timer_set1)
+    ret = setitimer(ITIMER_REAL, &delay, NULL);
+    if (ret)
     {
-        perror("timer_set1");
+        perror("setitimer");
         return;
     }
 
