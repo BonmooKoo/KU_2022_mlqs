@@ -96,21 +96,27 @@ NODE* dequeue(struct QUEUE *target){
 int timercount=0;
 int totaltimeslice=0;
 //signal hander 정의
-void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
+void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third,int pnum){
     //handler 불릴때마다 count 증가
     timercount++;
-    if(timercount==totaltimeslice){
+    totaltimeslice++;
+    if(totaltimeslice==pnum){
         //프로그램 종료
-        pid_t pid=getpid(void);
+        pid_t pid=getpid();
         kill(pid,SIGTERM);
+        //or
+        //exit(0);
     }
     if(timercount==10){
-        //초기화
+        NODE* temp;
+        //초기화(전부 first로 넣어줌)
         while(second->count!=0){
-            enqueue(dequeue(&second),&first);
+            temp=dequeue(&second);
+            enqueue(&temp,&first);
         }
         while(third->count!=0){
-            enqueue(dequeue(&third),&first);
+            temp=dequeue(&second);
+            enqueue(&temp,&first);
         }
         //정렬!
 
@@ -123,10 +129,10 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
         NODE* temp=dequeue(&first);
         temp->runtime++;
         if(temp->runtime==2){
-            enqueue(&second);
+            enqueue(&temp,&second);
             
         }else {
-            enqueue(&first);
+            enqueue(&temp,&first);
         }
         temp->runtime=0;
 
@@ -139,15 +145,13 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
         NODE* temp=dequeue(&second);
         temp->runtime++;
         if(temp->runtime==2){
-            enqueue(&third);
+            enqueue(&temp,&third);
             
         }else {
-            enqueue(&second);
+            enqueue(&temp,&second);
         }
         temp->runtime=0;
-
-        
-        kill(temp.fork_id,SIGSTOP);
+        kill(temp->fork_id,SIGSTOP);
         if(second->front->fork_id!=NULL){
             kill(second->front->fork_id,SIGCONT);
         }
@@ -156,14 +160,14 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third){
         NODE* temp=dequeue(&third);
         temp->runtime++;
         if(temp->runtime==2){
-            enqueue(&third);
+            enqueue(&temp,&third);
             
         }else {
-            enqueue(&third);
+            enqueue(&temp,&third);
         }
         temp->runtime=0;
 
-        kill(temp.fork_id,SIGSTOP);
+        kill(temp->fork_id,SIGSTOP);
         if(third->front->fork_id!=NULL){
             kill(third->front->fork_id,SIGCONT);
         }
@@ -203,8 +207,8 @@ int main(int args,char* argv[]){
 //signal hander 정의
     struct sigaction sa1;
     struct sigaction sa2;
-    sa1.sa_hander=sec_handler(&firstlv,&secondlv,&thirdlv);
-    sa2.sa_hander=end_handler;
+    sa1.sa_handler=sec_handler(&firstlv,&secondlv,&thirdlv,pnum);
+    //sa2.sa_handler=end_handler;
     
     int sig1=sigaction(EVERYSEC,&sa1,NULL);
     if(sig1){
