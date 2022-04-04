@@ -152,7 +152,7 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third,in
         }
         temp->runtime=0;
         kill(temp->fork_id,SIGSTOP);
-        if(second->front->fork_id!=NULL){
+        if(second->count!=0){
             kill(second->front->fork_id,SIGCONT);
         }
     }
@@ -168,7 +168,7 @@ void sec_handler(struct QUEUE *first,struct QUEUE *second,struct QUEUE *third,in
         temp->runtime=0;
 
         kill(temp->fork_id,SIGSTOP);
-        if(third->front->fork_id!=NULL){
+        if(third->count!=0){
             kill(third->front->fork_id,SIGCONT);
         }
     }
