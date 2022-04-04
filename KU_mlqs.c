@@ -5,11 +5,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <mqueue.h>
-
-#define CLOCKID CLOCK_MONOTONIC
-#define EVERYSEC SIGUSR1
-#define ENDPROCESS SIGUSR2
 
 // linked list 로 queue 구현
 typedef struct NODE
@@ -19,6 +14,7 @@ typedef struct NODE
     int runtime;
     int alpha;
 } NODE;
+
 typedef struct QUEUE
 {
     NODE *front;
@@ -36,6 +32,7 @@ int isEmpty(struct QUEUE *target)
     else
         return 0;
 }
+/*
 int peek(struct QUEUE *target)
 {
     if (target->count != 0)
@@ -45,6 +42,7 @@ int peek(struct QUEUE *target)
     else
         return 0;
 }
+*/
 void initqueue(struct QUEUE *target)
 {
     target->front = target->end = NULL;
@@ -100,7 +98,7 @@ void enqueue(struct NODE *new, struct QUEUE *target)
 
 NODE *dequeue(struct QUEUE *target)
 {
-    NODE *now;
+    struct NODE *now = malloc(sizeof(struct NODE));
     if (target->count = 0)
     {
         return NULL;
@@ -121,11 +119,13 @@ void sortQueue(struct QUEUE *target)
     }
 }
 */
+
 // linked list 종료
+
 // queue 선언
-QUEUE firstlv;
-QUEUE secondlv;
-QUEUE thirdlv;
+QUEUE *firstlv;
+QUEUE *secondlv;
+QUEUE *thirdlv;
 //
 
 // signal hander 정의
@@ -139,7 +139,6 @@ void sec_handler(int signo)
     timercount++;
     if (timercount == totaltimeslice)
     {
-        //프로그램 종료
         pid_t pid = getpid();
         kill(pid, SIGTERM);
         // or
@@ -149,12 +148,12 @@ void sec_handler(int signo)
     {
         NODE *temp;
         //초기화(전부 first로 넣어줌)
-        while (secondlv.count != 0)
+        while (secondlv->count != 0)
         {
             temp = dequeue(&secondlv);
             enqueue(&temp, &firstlv);
         }
-        while (thirdlv.count != 0)
+        while (thirdlv->count != 0)
         {
             temp = dequeue(&secondlv);
             enqueue(&temp, &firstlv);
@@ -207,25 +206,21 @@ void sec_handler(int signo)
         }
     }
     kill(old->fork_id, SIGSTOP);
-    if (firstlv.count != 0)
+    if (firstlv->count != 0)
     {
-        kill(firstlv.front->fork_id, SIGCONT);
+        kill(firstlv->front->fork_id, SIGCONT);
     }
-    else if (secondlv.count != 0)
+    else if (secondlv->count != 0)
     {
-        kill(secondlv.front->fork_id, SIGCONT);
+        kill(secondlv->front->fork_id, SIGCONT);
     }
-    else if (thirdlv.count != 0)
+    else if (thirdlv->count != 0)
     {
-        kill(thirdlv.front->fork_id, SIGCONT);
+        kill(thirdlv->front->fork_id, SIGCONT);
     }
 }
-void end_handler(int signo)
-{
-    // priority 초기화
-}
-// signal handler 종료
 
+// signal handler 종료
 int main(int args, char *argv[])
 {
     //초기 입력 변수 처리
@@ -246,31 +241,18 @@ int main(int args, char *argv[])
     // 3개 linked list 선입 선출
 
     //초기화
-    initqueue(&firstlv);
-    initqueue(&secondlv);
-    initqueue(&thirdlv);
-
-    // signal hander 정의
-    /*
-    struct sigaction sa1;
-    struct sigaction sa2;
-    sa1.sa_handler=sec_handler(&firstlv,&secondlv,&thirdlv,pnum);
-    //sa2.sa_handler=end_handler;
-
-    int sig1=sigaction(EVERYSEC,&sa1,NULL);
-    if(sig1){
-        perror("sig1");
-    }
-    int sig2=sigaction(ENDPROCESS,&sa2,NULL);
-    if(sig2){
-        perror("sig2");
-    }*/
-    signal(EVERYSEC, sec_handler);
-    // signal hander 끝
+    QUEUE first;
+    firstlv=&first;
+    QUEUE second;
+    secondlv=&second;
+    QUEUE third;
+    thirdlv=&third;;
+    initqueue(firstlv);
+    initqueue(secondlv);
+    initqueue(thirdlv);
 
     // fork() 생성
-    char input[2];
-    input[1] = '\0';
+    char input[2]={'A','\0'};
     for (int i = 0; i < pnum; i++)
     {
         int fork_id = fork();
@@ -282,12 +264,14 @@ int main(int args, char *argv[])
         else if (fork_id == 0)
         {
             // fork 프로그램 실행
-            input[1] = 'A' + i;
-            execl('./ku_app', 'ku_app', &input, NULL);
+            input[0] = 'A' + i;
+            execl("./ku_app", "ku_app", input, NULL);
         }
+
+        //enqueue 가 문제있음
         // parent
         else
-            enqueuenew(fork_id, i, &firstlv);
+            //enqueuenew(fork_id, i, &firstlv);
     }
     // fork 끝
     // fork가 모두 생성되도록 기다려줌 이후 타이머 시작
@@ -299,7 +283,6 @@ int main(int args, char *argv[])
     struct itimerval delay;
     int ret;
 
-    signal(SIGALRM, sec_handler);
 
     // timer setting
     delay.it_value.tv_sec = 1;
@@ -315,12 +298,13 @@ int main(int args, char *argv[])
     }
 
     // dequeue lv1 ('A')
-    NODE *temp = firstlv.front;
+    NODE *temp = firstlv->front;
     kill(temp->fork_id, SIGCONT);
 
-    while(1){
-
-    }
+    
     //이후 sig handler 에 맡김
+    signal(SIGALRM, sec_handler);
+
     //종료
+    
 }
