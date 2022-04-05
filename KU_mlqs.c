@@ -113,35 +113,48 @@ NODE *dequeue(QUEUE *target)
 // queue 선언
 
 void sortQueue(struct QUEUE *target)
-{   
-    QUEUE tempQue;
-    int counter=target->count;
+{
+    QUEUE *tempQue;
+    tempQue = (QUEUE *)malloc(sizeof(QUEUE));
+    tempQue->front = tempQue->end = NULL;
+    tempQue->count = 0;
+    int counter = target->count;
     int time;
-    NODE* now;
-    NODE* pointer;
+
+    NODE *now;
+    NODE *pointer;
     NODE point;
-    pointer=&point;
-    for(int j=0;j<counter;j++){
-        now=target->front;
-        int min=100;
-        time=counter-j;
-        if(time==0){
+    pointer = &point;
+    for (int j = 0; j < counter; j++)
+    {
+        now = target->front;
+        int min = 100;
+        time = counter - j;
+        if (time == 0)
+        {
             return;
         }
-        for(int i=0;i<time;i++){
-            if(now->alpha<min){
-                min=now->alpha;
-                pointer=now;
+
+        for (int i = 0; i < time; i++)
+        {
+            if (now->alpha < min)
+            {
+                min = now->alpha;
+                pointer = now;
             }
-            now=now->next;
+            now = now->next;
         }
-        enqueue(pointer,&tempQue);
+        enqueue(pointer, tempQue);
     }
-    for(int i=0;i<counter;i++){
-        enqueue(dequeue(&tempQue),target);
+
+    for (int i = 0; i < counter; i++)
+    {
+        if (tempQue->count > 0)
+        {
+            enqueue(dequeue(&tempQue), target);
+        }
     }
 }
-
 
 // linked list 종료
 
@@ -165,6 +178,21 @@ void sec_handler(int signo)
     printf("totaltimeslice:%d\n", totaltimeslice);
     if (timercount == totaltimeslice)
     {
+        if (firstlv->count != 0)
+        {
+            printf("firstline");
+            kill(firstlv->front->fork_id, SIGTERM);
+        }
+        else if (secondlv->count != 0)
+        {
+            printf("secondline");
+            kill(secondlv->front->fork_id, SIGTERM);
+        }
+        else if (thirdlv->count != 0)
+        {
+            printf("thirdline");
+            kill(thirdlv->front->fork_id, SIGTERM);
+        }
         printf("stop\n");
         pid_t pid = getpid();
         kill(pid, SIGTERM);
@@ -237,7 +265,6 @@ void sec_handler(int signo)
             temp = dequeue(secondlv);
             enqueue(temp, firstlv);
         }
-        
     }
     kill(old->fork_id, SIGSTOP);
     if (firstlv->count != 0)
