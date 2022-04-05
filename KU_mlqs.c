@@ -111,16 +111,37 @@ NODE *dequeue(QUEUE *target)
 
 // linked list 종료
 // queue 선언
-/*
-void sortQueue(struct QUEUE *target)
-{
-    int counter=target->count;
-    int max=100;
-    for(int i=0;i<counter;i++){
 
+void sortQueue(struct QUEUE *target)
+{   
+    QUEUE tempQue;
+    int counter=target->count;
+    int time;
+    NODE* now;
+    NODE* pointer;
+    NODE point;
+    pointer=&point;
+    for(int j=0;j<counter;j++){
+        now=target->front;
+        int min=100;
+        time=counter-j;
+        if(time==0){
+            return;
+        }
+        for(int i=0;i<time;i++){
+            if(now->alpha<min){
+                min=now->alpha;
+                pointer=now;
+            }
+            now=now->next;
+        }
+        enqueue(pointer,&tempQue);
+    }
+    for(int i=0;i<counter;i++){
+        enqueue(dequeue(&tempQue),target);
     }
 }
-*/
+
 
 // linked list 종료
 
@@ -206,8 +227,9 @@ void sec_handler(int signo)
         int num_nodes = thirdlv->count;
         for (int i = 0; i < num_nodes; i++)
         {
-            temp = dequeue(secondlv);
+            temp = dequeue(thirdlv);
             enqueue(temp, secondlv);
+            sortQueue(secondlv);
         }
         temp = secondlv->count;
         for (int i = 0; i < num_nodes; i++)
@@ -215,7 +237,7 @@ void sec_handler(int signo)
             temp = dequeue(secondlv);
             enqueue(temp, firstlv);
         }
-        //정렬!
+        
     }
     kill(old->fork_id, SIGSTOP);
     if (firstlv->count != 0)
