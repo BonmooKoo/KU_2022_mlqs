@@ -26,6 +26,7 @@ typedef struct QUEUE
 QUEUE *firstlv;
 QUEUE *secondlv;
 QUEUE *thirdlv;
+
 int isEmpty(QUEUE *target)
 {
     if (target->count == 0)
@@ -65,20 +66,6 @@ void enqueuenew(int fork_id, int alpha, QUEUE *target)
     }
     target->end = new;
     target->count++;
-    /*
-        NODE new;
-        new.next=NULL;
-        new.fork_id=fork_id;
-        new.alpha=alpha;
-        new.runtime=0;
-        if(target->count=0){
-            target->front=&new;
-        }else{
-            target->end->next=&new;
-        }
-        target->end=&new;
-        target->count++;
-    */
 }
 
 void enqueue(NODE *new, QUEUE *target)
@@ -114,28 +101,23 @@ NODE *dequeue(QUEUE *target)
 
 void sortQueue(struct QUEUE *target)
 {
+    
     QUEUE *tempQue;
     tempQue = (QUEUE *)malloc(sizeof(QUEUE));
     tempQue->front = tempQue->end = NULL;
     tempQue->count = 0;
     int counter = target->count;
-    int time;
-
+        
+    //현재 노드
     NODE *now;
+    //최소 node
     NODE *pointer;
-    NODE point;
-    pointer = &point;
     for (int j = 0; j < counter; j++)
     {
         now = target->front;
         int min = 100;
-        time = counter - j;
-        if (time == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < time; i++)
+    // 최소 알파벳을 찾고
+        for (int i = 0; i < counter; i++)
         {
             if (now->alpha < min)
             {
@@ -144,17 +126,12 @@ void sortQueue(struct QUEUE *target)
             }
             now = now->next;
         }
+        //NODE 상태로 넣는다.
         enqueue(pointer, tempQue);
     }
-
-    for (int i = 0; i < counter; i++)
-    {
-        if (tempQue->count > 0)
-        {
-            enqueue(dequeue(&tempQue), target);
-        }
-    }
+    target=tempQue;
 }
+
 
 // linked list 종료
 
@@ -173,27 +150,20 @@ void sec_handler(int signo)
 {
     // handler 불릴때마다 count 증가
     timercount++;
-    printf("handler\n");
-    printf("timercount: %d\n", timercount);
-    printf("totaltimeslice:%d\n", totaltimeslice);
     if (timercount == totaltimeslice)
     {
         if (firstlv->count != 0)
         {
-            printf("firstline");
             kill(firstlv->front->fork_id, SIGTERM);
         }
         else if (secondlv->count != 0)
         {
-            printf("secondline");
             kill(secondlv->front->fork_id, SIGTERM);
         }
         else if (thirdlv->count != 0)
         {
-            printf("thirdline");
             kill(thirdlv->front->fork_id, SIGTERM);
         }
-        printf("stop\n");
         pid_t pid = getpid();
         kill(pid, SIGTERM);
         // or
@@ -201,10 +171,8 @@ void sec_handler(int signo)
     }
 
     NODE *old;
-
     if (firstlv->count > 0)
     {
-        printf("newfork\n");
         //기본 실행 fork 종료
         //새 fork 실행
         old = dequeue(firstlv);
@@ -247,39 +215,41 @@ void sec_handler(int signo)
             enqueue(old, thirdlv);
         }
     }
+    
+    kill(old->fork_id, SIGSTOP);
     if (timercount % 10 == 0)
     {
-        printf("priority boost \n");
         NODE *temp;
         //초기화(전부 first로 넣어줌)
-        int num_nodes = thirdlv->count;
-        for (int i = 0; i < num_nodes; i++)
-        {
-            temp = dequeue(thirdlv);
-            enqueue(temp, secondlv);
-            sortQueue(secondlv);
-        }
-        temp = secondlv->count;
-        for (int i = 0; i < num_nodes; i++)
+        
+        
+        int seoondcount = secondlv->count;
+        for (int i = 0; i < seoondcount; i++)
         {
             temp = dequeue(secondlv);
-            enqueue(temp, firstlv);
+            temp->runtime=0;
+            enqueue(temp, thirdlv);
+        }
+        sortQueue(secondlv);
+        int thirdcount = thirdlv->count;
+        for (int i = 0; i < thirdcount; i++)
+        {
+            temp = dequeue(thirdlv);
+            temp->runtime=0;
+            enqueue(temp, secondlv);
         }
     }
-    kill(old->fork_id, SIGSTOP);
+    
     if (firstlv->count != 0)
     {
-        printf("firstline");
         kill(firstlv->front->fork_id, SIGCONT);
     }
     else if (secondlv->count != 0)
     {
-        printf("secondline");
         kill(secondlv->front->fork_id, SIGCONT);
     }
     else if (thirdlv->count != 0)
     {
-        printf("thirdline");
         kill(thirdlv->front->fork_id, SIGCONT);
     }
 }
@@ -352,9 +322,6 @@ int main(int args, char *argv[])
         perror("setitimer");
         return;
     }
-    printf("pnum: %d\n", pnum);
-    printf("timercount:%d\n", timercount);
-    printf("timeslice:%d\n", totaltimeslice);
 
     // dequeue lv1 ('A')
     NODE *temp = firstlv->front;
